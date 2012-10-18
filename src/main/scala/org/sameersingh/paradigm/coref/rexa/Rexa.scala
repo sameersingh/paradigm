@@ -1,6 +1,6 @@
-package cc.refectorie.user.sameer.distrib.coref.rexa
+package org.sameersingh.paradigm.coref.rexa
 
-import cc.refectorie.user.sameer.distrib.coref.EntitySet
+import org.sameersingh.paradigm.coref.EntitySet
 import cc.factorie.app.nlp.coref.HierCorefSampler
 import cc.factorie.{TemplateModel, Model, DiffList}
 import cc.factorie.app.bib.AuthorEntity

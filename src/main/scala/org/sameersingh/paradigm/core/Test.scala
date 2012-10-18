@@ -1,7 +1,7 @@
-package cc.refectorie.user.sameer.distrib.core
+package org.sameersingh.paradigm.core
 
 import akka.actor._
-import cc.refectorie.user.sameer.distrib.core._
+import org.sameersingh.paradigm.core._
 import com.typesafe.config.ConfigFactory
 import akka.japi.Creator
 import akka.event.Logging

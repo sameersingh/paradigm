@@ -1,6 +1,6 @@
-package cc.refectorie.user.sameer.distrib.coref
+package org.sameersingh.paradigm.coref
 
-import cc.refectorie.user.sameer.distrib.core.Queue
+import org.sameersingh.paradigm.core.Queue
 import cc.factorie.app.nlp.coref.HierEntity
 
 /**

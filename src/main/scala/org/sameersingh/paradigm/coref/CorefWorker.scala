@@ -1,8 +1,8 @@
-package cc.refectorie.user.sameer.distrib.coref
+package org.sameersingh.paradigm.coref
 
 import cc.factorie._
 import app.nlp.coref.{HierEntity, HierCorefSampler, Entity}
-import cc.refectorie.user.sameer.distrib.core._
+import org.sameersingh.paradigm.core._
 import collection.mutable.ArrayBuffer
 
 /**

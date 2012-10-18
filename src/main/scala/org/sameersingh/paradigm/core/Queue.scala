@@ -1,4 +1,4 @@
-package cc.refectorie.user.sameer.distrib.core
+package org.sameersingh.paradigm.core
 
 /**
  * @author sameer

@@ -1,8 +1,8 @@
-package cc.refectorie.user.sameer.distrib.coref
+package org.sameersingh.paradigm.coref
 
 import cc.factorie.app.nlp.coref.HierEntity
 import akka.actor.ActorRef
-import cc.refectorie.user.sameer.distrib.core.{LoadBalancingRemoteWorker, Master}
+import org.sameersingh.paradigm.core.{LoadBalancingRemoteWorker, Master}
 
 /**
  * @author sameer

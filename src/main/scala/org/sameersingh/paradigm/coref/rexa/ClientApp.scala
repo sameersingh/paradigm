@@ -1,6 +1,6 @@
-package cc.refectorie.user.sameer.distrib.coref.rexa
+package org.sameersingh.paradigm.coref.rexa
 
-import cc.refectorie.user.sameer.distrib.coref.{EntitySet, CorefWorker}
+import org.sameersingh.paradigm.coref.{EntitySet, CorefWorker}
 import cc.factorie.{TemplateModel, Model}
 
 /**

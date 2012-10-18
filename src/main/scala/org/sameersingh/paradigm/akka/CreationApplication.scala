@@ -1,4 +1,4 @@
-package cc.refectorie.user.sameer.distrib.akka
+package org.sameersingh.paradigm.akka
 
 /**
  * Copyright (C) 2009-2012 Typesafe Inc. <http://www.typesafe.com>
@@ -11,7 +11,7 @@ import com.typesafe.config.ConfigFactory
 import scala.util.Random
 import akka.actor._
 import akka.remote.RemoteScope
-import cc.refectorie.user.sameer.distrib.core.Util
+import org.sameersingh.paradigm.core.Util
 
 class CreationApplication {
   //#setup

@@ -1,9 +1,9 @@
-package cc.refectorie.user.sameer.distrib.coref.rexa
+package org.sameersingh.paradigm.coref.rexa
 
-import cc.refectorie.user.sameer.distrib.coref.CorefMaster
+import org.sameersingh.paradigm.coref.CorefMaster
 import com.typesafe.config.ConfigFactory
 import akka.actor.{Props, ActorSystem}
-import cc.refectorie.user.sameer.distrib.core.{MasterMessages, Util}
+import org.sameersingh.paradigm.core.{MasterMessages, Util}
 
 /**
  * @author sameer

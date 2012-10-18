@@ -1,4 +1,4 @@
-package cc.refectorie.user.sameer.distrib.akka
+package org.sameersingh.paradigm.akka
 
 /**
  * Copyright (C) 2009-2012 Typesafe Inc. <http://www.typesafe.com>
@@ -9,7 +9,7 @@ package cc.refectorie.user.sameer.distrib.akka
 
 import akka.actor.{ Props, Actor, ActorSystem }
 import com.typesafe.config.ConfigFactory
-import cc.refectorie.user.sameer.distrib.core.Util
+import org.sameersingh.paradigm.core.Util
 
 //#actor
 class SimpleCalculatorActor extends Actor {

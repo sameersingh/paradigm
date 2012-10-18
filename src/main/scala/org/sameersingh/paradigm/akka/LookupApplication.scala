@@ -1,4 +1,4 @@
-package cc.refectorie.user.sameer.distrib.akka
+package org.sameersingh.paradigm.akka
 
 /**
  * Copyright (C) 2009-2012 Typesafe Inc. <http://www.typesafe.com>
