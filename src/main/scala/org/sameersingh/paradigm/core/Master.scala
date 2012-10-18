@@ -36,7 +36,7 @@ abstract class Master[W <: Work, R <: Result] extends Actor with ActorLogging {
 
   def queue: Queue[W]
 
-  def createWorker(w: W, terminatedWorker: ActorRef): ActorRef
+  def createWorker(w: W, terminatedWorker: Option[ActorRef]): ActorRef
 
   def props: Props
 
@@ -49,7 +49,7 @@ abstract class Master[W <: Work, R <: Result] extends Actor with ActorLogging {
     case Terminated(s) =>
       workersActive -= 1
       log.debug("Terminated, alive: %d".format(workersActive))
-      val workSent = sendNextWork(s)
+      val workSent = sendNextWork(Some(s))
       if (workersActive == 0 && !workSent) self ! MasterMessages.Done()
     case c: CustomMasterMessage => customHandler(c, sender)
   }
@@ -77,7 +77,7 @@ abstract class Master[W <: Work, R <: Result] extends Actor with ActorLogging {
     queue.done(w)
   }
 
-  def sendNextWork(terminatedWorker: ActorRef = null): Boolean = {
+  def sendNextWork(terminatedWorker: Option[ActorRef] = None): Boolean = {
     val nextWork = queue.getJob
     if (nextWork.isDefined) {
       val w = nextWork.get
@@ -94,7 +94,7 @@ abstract class Master[W <: Work, R <: Result] extends Actor with ActorLogging {
 }
 
 trait LocalWorker[W <: Work, R <: Result] extends Master[W, R] {
-  def createWorker(w: W, terminatedWorker: ActorRef) = context.actorOf(props, "local%03d".format(nextWid))
+  def createWorker(w: W, terminatedWorker: Option[ActorRef]) = context.actorOf(props, "local%03d".format(nextWid))
 }
 
 /**
@@ -128,8 +128,8 @@ trait RandomRemoteWorker[W <: Work, R <: Result] extends RemoteWorker[W, R] {
 }
 
 trait LoadBalancingRemoteWorker[W <: Work, R <: Result] extends RemoteWorker[W, R] {
-  override def createWorker(w: W, terminatedWorker: ActorRef) = {
-    val host: String = if (terminatedWorker == null) pickHost else terminatedWorker.path.address.host.get
+  override def createWorker(w: W, terminatedWorker: Option[ActorRef]) = {
+    val host: String = if (terminatedWorker.isEmpty) pickHost else terminatedWorker.get.path.address.host.get
       context.actorOf(
         props.withDeploy(Util.remoteDeploy(workerSystemName, host, workerPort)),
         "worker%04d".format(nextWid))
