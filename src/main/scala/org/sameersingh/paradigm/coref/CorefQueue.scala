@@ -8,4 +8,4 @@ import cc.factorie.app.nlp.coref.HierEntity
  * @date 5/10/12
  */
 
-abstract class CorefQueue[E <: HierEntity] extends Queue[EntitySet[E]]
+abstract class CorefQueue[E <: HierEntity] extends Queue[EntitySet[E], EntitySet[E]]

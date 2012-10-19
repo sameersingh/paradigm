@@ -51,7 +51,7 @@ object TestMasters {
   /**
    * A Queue object that creates 10 jobs, 0 until 10, and iterates through them one by one.
    */
-  class TestQueue extends Queue[Job] {
+  class TestQueue extends Queue[Job, Job] {
     val numbers = (0 until 10).iterator
 
     def getJob = if (numbers.hasNext) Some(Job(numbers.next)) else None

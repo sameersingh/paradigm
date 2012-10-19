@@ -9,4 +9,6 @@ import org.sameersingh.paradigm.core.{LoadBalancingRemoteWorker, Master}
  * @date 5/10/12
  */
 
-abstract class CorefMaster[E <: HierEntity](val queue: CorefQueue[E]) extends Master[EntitySet[E], EntitySet[E]] with LoadBalancingRemoteWorker[EntitySet[E], EntitySet[E]]
+abstract class CorefMaster[E <: HierEntity](val queue: CorefQueue[E])
+      extends Master[EntitySet[E], EntitySet[E]]
+      with LoadBalancingRemoteWorker[EntitySet[E], EntitySet[E]]

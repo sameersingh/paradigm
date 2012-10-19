@@ -13,10 +13,13 @@ import org.sameersingh.paradigm.WorkerSystemConfig
 
 object MasterMessages {
 
+  // start the master
   case class Start()
 
+  // master is done, kill it
   case class Done()
 
+  // worker has finished some work, and returned the result (message from worker)
   case class WorkDone[W <: Work, R <: Result](work: W, result: R)
 
 }
@@ -24,12 +27,8 @@ object MasterMessages {
 trait CustomMasterMessage
 
 abstract class Master[W <: Work, R <: Result] extends Actor with ActorLogging {
-
-  def numWorkers: Int
-
+  // number of workers that have not terminated
   var workersActive = 0
-
-  def killWorkerSystemWhenDone: Boolean = false
 
   private var wid: Long = 0l
 
@@ -38,7 +37,12 @@ abstract class Master[W <: Work, R <: Result] extends Actor with ActorLogging {
     wid - 1
   }
 
-  def queue: Queue[W]
+  // total number of workers active at any time
+  def numWorkers: Int
+
+  def killWorkerSystemWhenDone: Boolean = false
+
+  def queue: Queue[W, R]
 
   def createWorker(w: W, terminatedWorker: Option[ActorRef]): ActorRef
 
@@ -60,13 +64,15 @@ abstract class Master[W <: Work, R <: Result] extends Actor with ActorLogging {
 
   /**
    * Start the master, and send jobs to workers
+   * @return true if all workers were assigned work, false is queue was emptied before all workers were assigned
    */
-  def start = {
+  def start: Boolean = {
     var i = 0
     while (i < numWorkers && sendNextWork()) {
       i += 1
       //log.debug("Started worker " + i)
     }
+    i == numWorkers
   }
 
   /**
@@ -84,7 +90,7 @@ abstract class Master[W <: Work, R <: Result] extends Actor with ActorLogging {
   def killWorkerSystems(): Unit
 
   def workDone(w: W, r: R) = {
-    queue.done(w)
+    queue.done(w, r)
   }
 
   def sendNextWork(terminatedWorker: Option[ActorRef] = None): Boolean = {
