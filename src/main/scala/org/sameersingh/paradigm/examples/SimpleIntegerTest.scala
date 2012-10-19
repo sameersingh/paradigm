@@ -3,6 +3,7 @@ package org.sameersingh.paradigm.examples
 import akka.actor._
 import org.sameersingh.paradigm.core._
 import com.typesafe.config.ConfigFactory
+import org.sameersingh.paradigm.WorkerSystemConfig
 
 /**
  * Simple example of how to run the distributed actors code
@@ -70,9 +71,9 @@ object TestMasters {
 
     def workerSystemName = "TestWorkerSystem"
 
-    def workerHostnames = Seq("127.0.0.1", "blake.cs.umass.edu")
-
     def workerPort = 2554
+
+    def workerSystemConfigs = Seq("127.0.0.1", "blake.cs.umass.edu").map(host => WorkerSystemConfig(workerSystemName, host, workerPort))
   }
 
   def main(args: Array[String]) {

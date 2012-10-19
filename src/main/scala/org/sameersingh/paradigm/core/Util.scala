@@ -7,6 +7,7 @@ import akka.actor.AddressFromURIString._
 import akka.remote.RemoteScope
 import akka.actor.{Deploy, AddressFromURIString}
 import akka.event.Logging
+import org.sameersingh.paradigm.WorkerSystemConfig
 
 /**
  * @author sameer
@@ -16,7 +17,7 @@ import akka.event.Logging
 object Util {
 
   def remoteConfig(hostname: String, port: Int, logLevel: String = "INFO"): Config =
-    ConfigFactory.parseString("""
+    ConfigFactory.parseString( """
   akka {
     loglevel = %s
 
@@ -31,7 +32,7 @@ object Util {
       }
     }
   }
-  """.format(logLevel.toString, hostname, port))
+                               """.format(logLevel.toString, hostname, port))
 
   def deployConfig(hostnames: Seq[String], port: Int, prefix: String, systemName: String): Config = {
     val sb = new StringBuffer()
@@ -42,5 +43,7 @@ object Util {
     ConfigFactory.parseString(sb.toString)
   }
 
-  def remoteDeploy(remoteSystem:String, hostname: String, port:Int) = Deploy(scope = RemoteScope(AddressFromURIString("akka://%s@%s:%d".format(remoteSystem, hostname, port))))
+  def remoteDeploy(cfg: WorkerSystemConfig): Deploy = remoteDeploy(cfg.systemName, cfg.hostname, cfg.port)
+
+  def remoteDeploy(remoteSystem: String, hostname: String, port: Int) = Deploy(scope = RemoteScope(AddressFromURIString("akka://%s@%s:%d".format(remoteSystem, hostname, port))))
 }

@@ -4,6 +4,7 @@ import org.sameersingh.paradigm.coref.CorefMaster
 import com.typesafe.config.ConfigFactory
 import akka.actor.{Props, ActorSystem}
 import org.sameersingh.paradigm.core.{MasterMessages, Util}
+import org.sameersingh.paradigm.WorkerSystemConfig
 
 /**
  * @author sameer
@@ -11,15 +12,17 @@ import org.sameersingh.paradigm.core.{MasterMessages, Util}
  */
 
 class RexaMaster(queue: RexaQueue) extends CorefMaster[Rexa.Entity](queue) {
-  def numWorkers = 0
+  def numWorkers = Rexa.numWorkers
+
+  override def killWorkerSystemWhenDone = Rexa.masterShouldKillWorkers
 
   def props = Props[RexaWorker]
 
   def workerSystemName = Rexa.workerSystem
 
-  def workerHostnames = Rexa.workerHosts
-
   def workerPort = Rexa.workerPort
+
+  def workerSystemConfigs = Rexa.workerHosts.map(host => WorkerSystemConfig(workerSystemName, host, workerPort))
 }
 
 object RemoteApp {

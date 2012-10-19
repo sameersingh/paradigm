@@ -3,6 +3,8 @@ package org.sameersingh.paradigm.core
 import akka.actor._
 import akka.remote.RemoteScope
 import util.Random
+import collection.mutable.HashMap
+import org.sameersingh.paradigm.WorkerSystemConfig
 
 /**
  * @author sameer
@@ -112,43 +114,47 @@ trait LocalWorker[W <: Work, R <: Result] extends Master[W, R] {
  * By default uses the round robin scheduler
  */
 trait RemoteWorker[W <: Work, R <: Result] extends Master[W, R] {
-  def workerSystemName: String
+  def workerSystemConfigs: Seq[WorkerSystemConfig]
 
-  def workerHostnames: Seq[String]
-
-  def workerPort: Int
+  lazy val workerSystemConfigMap: HashMap[String, WorkerSystemConfig] = {
+    val map = new HashMap[String, WorkerSystemConfig]
+    for (wconfig <- workerSystemConfigs)
+      if (map.put(wconfig.hostname, wconfig) != None) {
+        log.error("Multiple worker configs represent the same host: " + wconfig.hostname)
+        throw new Error()
+      }
+    map
+  }
 
   var i: Int = 0
 
-  def pickHost: String = {
+  def pickHost: WorkerSystemConfig = {
     i += 1
-    if (i == workerHostnames.length) i = 0
-    workerHostnames(i)
+    if (i == workerSystemConfigs.length) i = 0
+    workerSystemConfigs(i)
   }
 
   def killWorkerSystems() =
-    for (hostname <- workerHostnames)
-      context.actorOf(
-        props.withDeploy(Util.remoteDeploy(workerSystemName, hostname, workerPort)),
-        "worker%04d".format(nextWid)) ! WorkerMessages.KillSystem()
+    for (wconfig <- workerSystemConfigs)
+      createWorker(wconfig) ! WorkerMessages.KillSystem()
 
-  def createWorker(w: W, terminatedWorker: ActorRef) =
-    context.actorOf(
-      props.withDeploy(Util.remoteDeploy(workerSystemName, pickHost, workerPort)),
-      "worker%04d".format(nextWid))
+  def createWorker(wconfig: WorkerSystemConfig) = context.actorOf(props.withDeploy(Util.remoteDeploy(wconfig)), "worker%04d".format(nextWid))
+
+  def createWorker(w: W, terminatedWorker: Option[ActorRef]) = createWorker(pickHost)
 }
 
 trait RandomRemoteWorker[W <: Work, R <: Result] extends RemoteWorker[W, R] {
   val random: Random = new Random
 
-  override def pickHost: String = workerHostnames(random.nextInt(workerHostnames.length))
+  override def pickHost: WorkerSystemConfig = workerSystemConfigs(random.nextInt(workerSystemConfigs.length))
 }
 
+/**
+ * Perform round robin assignment unless a worker has terminated, in which case, assign it to its host
+ */
 trait LoadBalancingRemoteWorker[W <: Work, R <: Result] extends RemoteWorker[W, R] {
   override def createWorker(w: W, terminatedWorker: Option[ActorRef]) = {
-    val host: String = if (terminatedWorker.isEmpty) pickHost else terminatedWorker.get.path.address.host.get
-    context.actorOf(
-      props.withDeploy(Util.remoteDeploy(workerSystemName, host, workerPort)),
-      "worker%04d".format(nextWid))
+    val wconfig = if (terminatedWorker.isEmpty) pickHost else workerSystemConfigMap(terminatedWorker.get.path.address.host.get)
+    createWorker(wconfig)
   }
 }

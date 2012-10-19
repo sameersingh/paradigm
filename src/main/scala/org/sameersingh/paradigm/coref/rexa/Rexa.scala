@@ -32,6 +32,8 @@ object Rexa {
 
   val numWorkerSteps = 100
 
+  val masterShouldKillWorkers = false
+
   def newSampler(model: TemplateModel) =
     // TODO Use a specific sampler
     new HierCorefSampler[Entity](model) {
