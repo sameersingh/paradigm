@@ -72,7 +72,7 @@ abstract class Master[W <: Work, R <: Result] extends Actor with ActorLogging {
       i += 1
       //log.debug("Started worker " + i)
     }
-    i == numWorkers
+    i == (numWorkers + 1)
   }
 
   /**

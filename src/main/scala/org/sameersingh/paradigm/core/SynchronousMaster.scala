@@ -29,6 +29,7 @@ trait SynchronousMaster[W <: Work, R <: Result] extends Master[W, R] {
         } else {
           log.debug("Round over, sending next batch of jobs")
           lastRound = !start
+          if(lastRound) log.debug("It's the last round.")
         }
       }
     case c: CustomMasterMessage => customHandler(c, sender)

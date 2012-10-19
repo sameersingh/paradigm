@@ -65,6 +65,8 @@ object TestMasters {
 
     val numWorkers = 5
 
+    override def killWorkerSystemWhenDone = true
+
     val queue = new TestQueue
 
     def props = Props[TestWorker]
@@ -76,11 +78,14 @@ object TestMasters {
     def workerSystemConfigs = Seq("127.0.0.1", "blake.cs.umass.edu").map(host => WorkerSystemConfig(workerSystemName, host, workerPort))
   }
 
+  class TestSyncMaster extends TestMaster with SynchronousMaster[Job, Job]
+
   def main(args: Array[String]) {
+    val synchronous = true
     println("Start Master")
     val system = ActorSystem("TestMasterSystem", ConfigFactory.load(Util.remoteConfig("127.0.0.1", 2552, "DEBUG")))
     println("Creating master")
-    val master = system.actorOf(Props[TestMaster], "master")
+    val master = if (synchronous) system.actorOf(Props[TestSyncMaster], "master") else system.actorOf(Props[TestMaster], "master")
     println("Sending start to master")
     master ! MasterMessages.Start()
   }
