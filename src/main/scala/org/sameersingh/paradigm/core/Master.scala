@@ -27,6 +27,8 @@ abstract class Master[W <: Work, R <: Result] extends Actor with ActorLogging {
 
   var workersActive = 0
 
+  def killWorkerSystemWhenDone: Boolean = false
+
   private var wid: Long = 0l
 
   protected def nextWid: Long = {
@@ -69,9 +71,15 @@ abstract class Master[W <: Work, R <: Result] extends Actor with ActorLogging {
    * No more work to be sent to the workers
    */
   def done = {
+    if (killWorkerSystemWhenDone) killWorkerSystems()
     context.system.shutdown()
     //context.stop(self)
   }
+
+  /**
+   * Bring down the worker actor systems
+   */
+  def killWorkerSystems(): Unit
 
   def workDone(w: W, r: R) = {
     queue.done(w)
@@ -94,6 +102,9 @@ abstract class Master[W <: Work, R <: Result] extends Actor with ActorLogging {
 }
 
 trait LocalWorker[W <: Work, R <: Result] extends Master[W, R] {
+
+  def killWorkerSystems() = context.actorOf(props, "local%03d".format(nextWid)) ! WorkerMessages.KillSystem()
+
   def createWorker(w: W, terminatedWorker: Option[ActorRef]) = context.actorOf(props, "local%03d".format(nextWid))
 }
 
@@ -115,6 +126,12 @@ trait RemoteWorker[W <: Work, R <: Result] extends Master[W, R] {
     workerHostnames(i)
   }
 
+  def killWorkerSystems() =
+    for (hostname <- workerHostnames)
+      context.actorOf(
+        props.withDeploy(Util.remoteDeploy(workerSystemName, hostname, workerPort)),
+        "worker%04d".format(nextWid)) ! WorkerMessages.KillSystem()
+
   def createWorker(w: W, terminatedWorker: ActorRef) =
     context.actorOf(
       props.withDeploy(Util.remoteDeploy(workerSystemName, pickHost, workerPort)),
@@ -130,8 +147,8 @@ trait RandomRemoteWorker[W <: Work, R <: Result] extends RemoteWorker[W, R] {
 trait LoadBalancingRemoteWorker[W <: Work, R <: Result] extends RemoteWorker[W, R] {
   override def createWorker(w: W, terminatedWorker: Option[ActorRef]) = {
     val host: String = if (terminatedWorker.isEmpty) pickHost else terminatedWorker.get.path.address.host.get
-      context.actorOf(
-        props.withDeploy(Util.remoteDeploy(workerSystemName, host, workerPort)),
-        "worker%04d".format(nextWid))
+    context.actorOf(
+      props.withDeploy(Util.remoteDeploy(workerSystemName, host, workerPort)),
+      "worker%04d".format(nextWid))
   }
 }

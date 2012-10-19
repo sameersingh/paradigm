@@ -11,7 +11,7 @@ import akka.actor.{ActorLogging, ActorRef, Actor}
 object WorkerMessages {
 
   case class WorkOnThis[W <: Work](w: W)
-
+  case class KillSystem()
 }
 
 trait CustomWorkerMessage
@@ -25,6 +25,10 @@ abstract class Worker[W <: Work, R <: Result] extends Actor with ActorLogging {
       sender ! MasterMessages.WorkDone(w, r)
       log.debug("Dying")
       context.stop(self)
+    }
+    case WorkerMessages.KillSystem() => {
+      log.debug("Killing actor and system.")
+      context.system.shutdown()
     }
     case c: CustomWorkerMessage => customHandler(c, sender)
   }
