@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.sameersingh.paradigm</groupId>
   <artifactId>paradigm</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.2-SNAPSHOT</version>
   <inceptionYear>2012</inceptionYear>
   <description>Library for distributed and parallel inference and learning of graphical models</description>
   <licenses>
