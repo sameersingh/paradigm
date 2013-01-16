@@ -1,6 +1,6 @@
-package org.sameersingh.paradigm.coref.rexa
+package org.sameersingh.paradigm.hcoref.rexa
 
-import org.sameersingh.paradigm.coref.CorefMaster
+import org.sameersingh.paradigm.hcoref.CorefMaster
 import com.typesafe.config.ConfigFactory
 import akka.actor.{Props, ActorSystem}
 import org.sameersingh.paradigm.core.{MasterMessages, Util}

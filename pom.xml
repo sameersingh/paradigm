@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.sameersingh.paradigm</groupId>
   <artifactId>paradigm</artifactId>
-  <version>0.0.2-SNAPSHOT</version>
+  <version>0.1-SNAPSHOT</version>
   <inceptionYear>2012</inceptionYear>
   <description>Library for distributed and parallel inference and learning of graphical models</description>
   <licenses>
@@ -19,6 +19,8 @@
     <maven.compiler.target>1.5</maven.compiler.target>
     <encoding>UTF-8</encoding>
     <scala.version>2.9.1</scala.version>
+    <utils.version>0.1.1-SNAPSHOT</utils.version>
+    <factorie.version>1.0.0-M2</factorie.version>
   </properties>
 
   <repositories>
@@ -47,6 +49,17 @@
       <name>Typesafe Repository</name>
       <url>http://repo.typesafe.com/typesafe/releases/</url>
     </repository>
+    <!-- for utils -->
+    <repository>
+      <id>sameer-releases</id>
+      <name>Sameer's repostory</name>
+      <url>https://github.com/sameersingh/maven-repo/raw/master/releases</url>
+    </repository>
+    <repository>
+      <id>sameer-snapshots</id>
+      <name>Sameer's repository</name>
+      <url>https://github.com/sameersingh/maven-repo/raw/master/snapshots</url>
+    </repository>
     <!-- for jerkson -->
     <repository>
       <id>repo.codahale.com</id>
@@ -71,17 +84,12 @@
     <dependency>
       <groupId>cc.factorie</groupId>
       <artifactId>factorie</artifactId>
-      <version>1.0.0-M1</version>
+      <version>${factorie.version}</version>
     </dependency>
     <dependency>
       <groupId>com.codahale</groupId>
       <artifactId>jerkson_${scala.version}</artifactId>
       <version>0.5.0</version>
-    </dependency>
-    <dependency>
-      <groupId>cc.refectorie.user.sameer</groupId>
-      <artifactId>util</artifactId>
-      <version>1.1-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.typesafe.akka</groupId>
@@ -98,6 +106,43 @@
       <artifactId>config</artifactId>
       <version>0.4.0</version>
     </dependency>
+    <!-- Personal -->
+    <dependency>
+      <groupId>org.sameersingh.scalaplot</groupId>
+      <artifactId>scalaplot</artifactId>
+      <version>0.1-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.sameersingh.experiments</groupId>
+      <artifactId>experiments</artifactId>
+      <version>0.1-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.sameersingh.infutils</groupId>
+      <artifactId>infutils</artifactId>
+      <version>0.1-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.sameersingh.utils</groupId>
+      <artifactId>timing</artifactId>
+      <version>${utils.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.sameersingh.utils</groupId>
+      <artifactId>coref</artifactId>
+      <version>${utils.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.sameersingh.utils</groupId>
+      <artifactId>misc</artifactId>
+      <version>${utils.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.sameersingh.utils</groupId>
+      <artifactId>cmdopts</artifactId>
+      <version>${utils.version}</version>
+    </dependency>
+
     <!-- For akka -->
     <dependency>
       <groupId>com.google.protobuf</groupId>
@@ -137,21 +182,6 @@
       <name>Sameer's repository</name>
       <url>https://github.com/sameersingh/maven-repo/raw/master/snapshots</url>
     </snapshotRepository>
-    <!-- repository>
-      <id>ieslnexus</id>
-      <name>IESL Nexus repostory</name>
-      <url>https://dev-iesl.cs.umass.edu/nexus/content/repositories/releases</url>
-    </repository>
-    <snapshotRepository>
-      <id>ieslnexus</id>
-      <name>IESL Nexus repostory</name>
-      <url>https://dev-iesl.cs.umass.edu/nexus/content/repositories/snapshots</url>
-    </snapshotRepository>
-    <site>
-      <id>ieslwww</id>
-      <name>IESL www repository</name>
-      <url>scp://iesl.cs.umass.edu/m/iesl/data2/www/iesl/maven/factorie</url>
-    </site-->
   </distributionManagement>
 
   <build>
@@ -185,16 +215,16 @@
             <jvmArg>-Xms64m</jvmArg>
             <jvmArg>-Xmx1800m</jvmArg>
           </jvmArgs>
-          <launchers>
-            <launcher>
-              <id>errorbars</id>
-              <mainClass>org.sameersingh.paradigm.old.persistence.ErrorBars</mainClass>
-              <jvmArgs>
-                <jvmArg>-Xmx6g</jvmArg>
-              </jvmArgs>
-            </launcher>
-          </launchers>
           <scalaVersion>${scala.version}</scalaVersion>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
         </configuration>
       </plugin>
       <plugin>

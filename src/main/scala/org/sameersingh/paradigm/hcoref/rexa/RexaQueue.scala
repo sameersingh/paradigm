@@ -1,6 +1,6 @@
-package org.sameersingh.paradigm.coref.rexa
+package org.sameersingh.paradigm.hcoref.rexa
 
-import org.sameersingh.paradigm.coref.{EntitySet, CorefQueue}
+import org.sameersingh.paradigm.hcoref.{EntitySet, CorefQueue}
 
 
 /**

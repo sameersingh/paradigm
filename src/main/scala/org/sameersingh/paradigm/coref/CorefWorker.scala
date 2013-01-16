@@ -1,17 +1,18 @@
 package org.sameersingh.paradigm.coref
 
 import cc.factorie._
-import app.nlp.coref.{HierEntity, HierCorefSampler, Entity}
 import org.sameersingh.paradigm.core._
 import collection.mutable.ArrayBuffer
+import org.sameersingh.utils.coref.{Entity, MentionRecord}
+import org.sameersingh.utils.coref.Proposers.CorefProposer
 
 /**
  * @author sameer
  * @date 5/10/12
  */
 
-abstract class EntitySet[E <: HierEntity] extends Seq[E] with Work with Result {
-  def entities: Seq[E]
+abstract class EntitySet[R <: MentionRecord] extends Seq[Entity[R]] with Work with Result {
+  def entities: Seq[Entity[R]]
 
   def length = entities.length
 
@@ -20,20 +21,20 @@ abstract class EntitySet[E <: HierEntity] extends Seq[E] with Work with Result {
   def iterator = entities.iterator
 }
 
-abstract class CorefWorker[E <: HierEntity] extends Worker[EntitySet[E], EntitySet[E]] {
+abstract class CorefWorker[R <: MentionRecord] extends Worker[EntitySet[R], EntitySet[R]] {
 
-  type SamplerType = HierCorefSampler[E]
+  type SamplerType = CorefProposer[R]
   type ModelType = TemplateModel
 
   def model: ModelType
 
-  def newSampler(model: ModelType, entities: EntitySet[E]): SamplerType
+  def newSampler(model: ModelType, entities: EntitySet[R]): SamplerType
 
   def numSteps: Int
 
-  def result(sampler: SamplerType): EntitySet[E]
+  def result(sampler: SamplerType): EntitySet[R]
 
-  def doWork(w: EntitySet[E]): EntitySet[E] = {
+  def doWork(w: EntitySet[R]): EntitySet[R] = {
     preWork(w)
     val sampler = newSampler(model, w)
     sampler.setEntities(w)
@@ -42,7 +43,7 @@ abstract class CorefWorker[E <: HierEntity] extends Worker[EntitySet[E], EntityS
     result(sampler)
   }
 
-  def preWork(entities: EntitySet[E]): Unit = {}
+  def preWork(entities: EntitySet[R]): Unit = {}
 
-  def postWork(sampler: SamplerType, entities: EntitySet[E]): Unit = {}
+  def postWork(sampler: SamplerType, entities: EntitySet[R]): Unit = {}
 }
