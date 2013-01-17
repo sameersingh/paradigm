@@ -70,9 +70,9 @@ abstract class Master[W <: Work, R <: Result] extends Actor with ActorLogging {
     var i = 0
     while (i < numWorkers && sendNextWork()) {
       i += 1
-      //log.debug("Started worker " + i)
+      log.debug("Started worker " + i)
     }
-    i == (numWorkers + 1)
+    i == (numWorkers) // - 1)
   }
 
   /**

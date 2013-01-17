@@ -5,5 +5,5 @@ package org.sameersingh.paradigm.core
  * @date 4/13/12
  */
 
-trait Work
-trait Result
+trait Work extends Serializable
+trait Result extends Serializable
