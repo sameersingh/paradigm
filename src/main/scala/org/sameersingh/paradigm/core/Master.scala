@@ -164,3 +164,8 @@ trait LoadBalancingRemoteWorker[W <: Work, R <: Result] extends RemoteWorker[W, 
     createWorker(wconfig)
   }
 }
+
+trait ReadWorkerConfigs {
+  def workerConfigDir: String
+  def workerSystemConfigs: Seq[WorkerSystemConfig] = WorkerSystemConfig.fromDir(workerConfigDir)
+}
