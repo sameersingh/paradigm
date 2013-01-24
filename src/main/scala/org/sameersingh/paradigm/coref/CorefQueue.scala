@@ -2,8 +2,9 @@ package org.sameersingh.paradigm.coref
 
 import cc.factorie._
 import org.sameersingh.paradigm.core.Queue
-import org.sameersingh.utils.coref.{Entity, MentionRecord}
+import org.sameersingh.utils.coref.{Entity, MentionRecord, Canopizer}
 import collection.mutable.{HashSet, HashMap}
+import collection.mutable
 
 /**
  * @author sameer
@@ -40,6 +41,8 @@ class BasicQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
     _entityIndex - 1
   }
 
+  def pickIds: Iterable[Long] = entities.keys
+
   def getJob: Option[EntitySet[R]] = {
     if (_jobsSent >= numJobs) return None
     //println("___ BEFORE SENDING ___")
@@ -47,7 +50,7 @@ class BasicQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
     _jobsSent += 1
     var mentionsPicked = 0
     var entitiesPicked = 0
-    val es = entities.keys.shuffle()
+    val es = pickIds.shuffle()
           .filterNot(id => locked.contains(id)).map(entities(_)).filterNot(_.size == 0)
           .takeWhile(e => {
       val needToAdd = (mentionsPicked < maxMentionsPerJob && entitiesPicked < maxEntitiesPerJob)
@@ -62,27 +65,39 @@ class BasicQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
     Some(EntitySet.fromEntities[R](es))
   }
 
+  def doneWork(wes: Seq[Entity[R]]) = {
+    wes.foreach(locked -= _.id)
+    wes.foreach(e => entities.remove(e.id))
+  }
+
+  def doneResults(res: Seq[Entity[R]]) = {
+    for (e <- res) {
+      //print("Adding %d ..." format(e.size))
+      val ne = new Entity[R](nextNewEntityIndex)
+      while (e.size != 0) {
+        val m = e.mentions.head
+        m.setEntity(ne)(null)
+      }
+      addEntity(ne)
+      //println("Done %d, %d" format(ne.size, e.size))
+    }
+  }
+
+  def addEntity(ne: Entity[R]): Unit = {
+    entities(ne.id) = ne
+  }
+
   override def done(w: EntitySet[R], r: EntitySet[R]) {
     // unlock old entities, and remove them
     //println("___ BEFORE AGGREGATING RESULTS ___")
     //printMap()
     val wes = EntitySet.origEntities(w)
-    wes.foreach(locked -= _.id)
-    wes.foreach(e => entities.remove(e.id))
+    doneWork(wes)
     //println("___ AFTER UNLOCKING ___")
     //printMap()
     val res = EntitySet.sequentialEntities(r, 0)
     //println("___ RETURNED: (%d, %s)" format(res.length, res.mkString(", ")))
-    for (e <- res) {
-      //print("Adding %d ..." format(e.size))
-      val ne = new Entity[R](nextNewEntityIndex)
-      while(e.size != 0) {
-        val m = e.mentions.head
-        m.setEntity(ne)(null)
-      }
-      entities(ne.id) = ne
-      //println("Done %d, %d" format(ne.size, e.size))
-    }
+    doneResults(res)
     println("___ AFTER AGGREGATING ___")
     printMap()
   }
@@ -97,6 +112,39 @@ class BasicQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
         println("   " + m.record)
       }
     }
+  }
+}
+
+class CanopizedQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
+                                         maxEntitiesPerJob: Int,
+                                         maxMentionsPerJob: Int,
+                                         numJobs: Int,
+                                         val canopizer: Canopizer[R]) extends BasicQueue[R](initEntities, maxEntitiesPerJob, maxMentionsPerJob, numJobs) {
+  val canopyEntities = new HashMap[String, HashSet[Long]]
+  val entityCanopies = new HashMap[Long, HashSet[String]]
+
+
+  override def pickIds = canopyEntities.sampleUniformly._2
+
+  override def doneWork(wes: Seq[Entity[R]]) {
+    for (e <- wes) {
+      val canopies = entityCanopies(e.id)
+      for (c <- canopies) {
+        canopyEntities(c).remove(e.id)
+        if(canopyEntities(c).isEmpty) canopyEntities.remove(c)
+      }
+      entityCanopies.remove(e.id)
+    }
+    super.doneWork(wes)
+  }
+
+  override def addEntity(ne: Entity[R]) {
+    val canopies = canopizer.canopies(ne.mentions.map(_.record))
+    for (c <- canopies) {
+      canopyEntities.getOrElseUpdate(c, new HashSet) += ne.id
+    }
+    entityCanopies.getOrElseUpdate(ne.id, new HashSet) ++= canopies
+    super.addEntity(ne)
   }
 }
 
