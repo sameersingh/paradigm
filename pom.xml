@@ -18,16 +18,16 @@
     <maven.compiler.source>1.5</maven.compiler.source>
     <maven.compiler.target>1.5</maven.compiler.target>
     <encoding>UTF-8</encoding>
-    <scala.version>2.9.1</scala.version>
+    <scala.version>2.9.2</scala.version>
     <utils.version>0.1.1-SNAPSHOT</utils.version>
-    <factorie.version>1.0.0-M2</factorie.version>
+    <factorie.version>1.0.0-M3</factorie.version>
   </properties>
 
   <repositories>
     <repository>
       <id>scala-tools.org</id>
       <name>Scala-Tools Maven2 Repository</name>
-      <url>http://scala-tools.org/repo-releases</url>
+      <url>https://oss.sonatype.org/content/groups/scala-tools</url>
     </repository>
     <repository>
       <id>third.iesl.cs.umass.edu</id>
@@ -60,11 +60,6 @@
       <name>Sameer's repository</name>
       <url>https://github.com/sameersingh/maven-repo/raw/master/snapshots</url>
     </repository>
-    <!-- for jerkson -->
-    <repository>
-      <id>repo.codahale.com</id>
-      <url>http://repo.codahale.com</url>
-    </repository>
   </repositories>
 
   <pluginRepositories>
@@ -87,9 +82,9 @@
       <version>${factorie.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.codahale</groupId>
+      <groupId>io.backchat.jerkson</groupId>
       <artifactId>jerkson_${scala.version}</artifactId>
-      <version>0.5.0</version>
+      <version>0.7.0</version>
     </dependency>
     <dependency>
       <groupId>com.typesafe.akka</groupId>
