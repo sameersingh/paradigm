@@ -34,6 +34,8 @@ object Util {
   }
                                """.format(logLevel.toString, hostname, port))
 
+  def remoteWorkerConfig(cfg:WorkerSystemConfig, logLevel: String = "INFO"): Config = remoteConfig(cfg.hostname, cfg.port, logLevel)
+
   def deployConfig(hostnames: Seq[String], port: Int, prefix: String, systemName: String): Config = {
     val sb = new StringBuffer()
     sb append ("akka {actor {deployment {\n        ")
