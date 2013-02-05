@@ -1,6 +1,6 @@
 package org.sameersingh.paradigm.core
 
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.{ConfigParseOptions, Config, ConfigFactory}
 import akka.actor.Deploy._
 import akka.remote.RemoteScope._
 import akka.actor.AddressFromURIString._
@@ -16,8 +16,14 @@ import org.sameersingh.paradigm.WorkerSystemConfig
 
 object Util {
 
+  val mergedConfig = {
+    val referenceConfig = ConfigFactory.parseResourcesAnySyntax(getClass, "/reference", ConfigParseOptions.defaults)
+    //println(referenceConfig.root.render)
+    referenceConfig //.root.render
+  }
+
   def remoteConfig(hostname: String, port: Int, logLevel: String = "INFO"): Config =
-    ConfigFactory.parseString( """
+    mergedConfig.withFallback(ConfigFactory.parseString( """
   akka {
     loglevel = %s
 
@@ -26,15 +32,16 @@ object Util {
     }
 
     remote {
+      transport = "akka.remote.netty.NettyRemoteTransport"
       netty {
         hostname = "%s"
         port = %d
       }
     }
   }
-                               """.format(logLevel.toString, hostname, port))
+                                                         """.format(logLevel.toString, hostname, port))) //.withFallback()
 
-  def remoteWorkerConfig(cfg:WorkerSystemConfig, logLevel: String = "INFO"): Config = remoteConfig(cfg.hostname, cfg.port, logLevel)
+  def remoteWorkerConfig(cfg: WorkerSystemConfig, logLevel: String = "INFO"): Config = remoteConfig(cfg.hostname, cfg.port, logLevel)
 
   def deployConfig(hostnames: Seq[String], port: Int, prefix: String, systemName: String): Config = {
     val sb = new StringBuffer()

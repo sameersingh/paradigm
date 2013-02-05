@@ -98,8 +98,8 @@ class BasicQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
     val res = EntitySet.sequentialEntities(r, 0)
     //println("___ RETURNED: (%d, %s)" format(res.length, res.mkString(", ")))
     doneResults(res)
-    println("___ AFTER AGGREGATING ___")
-    printMap()
+    //println("___ AFTER AGGREGATING ___")
+    //printMap()
   }
 
   def printMap(): Unit = {
@@ -123,6 +123,13 @@ class CanopizedQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
   val canopyEntities = new HashMap[String, HashSet[Long]]
   val entityCanopies = new HashMap[Long, HashSet[String]]
 
+  initEntities.foreach(e => {
+    val canopies = canopizer.canopies(e.mentions.map(_.record))
+    for (c <- canopies) {
+      canopyEntities.getOrElseUpdate(c, new HashSet) += e.id
+    }
+    entityCanopies.getOrElseUpdate(e.id, new HashSet) ++= canopies
+  })
 
   override def pickIds = canopyEntities.sampleUniformly._2
 
