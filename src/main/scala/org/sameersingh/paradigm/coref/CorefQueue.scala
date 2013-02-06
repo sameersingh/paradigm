@@ -3,7 +3,7 @@ package org.sameersingh.paradigm.coref
 import cc.factorie._
 import org.sameersingh.paradigm.core.Queue
 import org.sameersingh.utils.coref.{Entity, MentionRecord, Canopizer}
-import collection.mutable.{HashSet, HashMap}
+import collection.mutable.{HashSet, HashMap, ArrayBuffer}
 import collection.mutable
 
 /**
@@ -26,6 +26,9 @@ class BasicQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
                                      val maxEntitiesPerJob: Int,
                                      val maxMentionsPerJob: Int,
                                      val numJobs: Int) extends CorefQueue[R] {
+
+  val minEntitiesPerJob = 2
+  val minMentionsPerJob = 2
 
   val entities: HashMap[Long, Entity[R]] = new HashMap
   initEntities.foreach(e => entities(e.id) = e)
@@ -50,16 +53,21 @@ class BasicQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
     _jobsSent += 1
     var mentionsPicked = 0
     var entitiesPicked = 0
-    val es = pickIds.shuffle()
-          .filterNot(id => locked.contains(id)).map(entities(_)).filterNot(_.size == 0)
-          .takeWhile(e => {
-      val needToAdd = (mentionsPicked < maxMentionsPerJob && entitiesPicked < maxEntitiesPerJob)
-      mentionsPicked += e.size
-      entitiesPicked += 1
-      needToAdd
-    })
+    val es = new ArrayBuffer[Entity[R]]
+    while (es.length < minEntitiesPerJob) {
+      val tes = pickIds.shuffle()
+            .filterNot(id => locked.contains(id)).map(entities(_)).filterNot(_.size == 0)
+            .takeWhile(e => {
+        val needToAdd = (mentionsPicked < minMentionsPerJob || entitiesPicked < minEntitiesPerJob) ||
+              (mentionsPicked < maxMentionsPerJob && entitiesPicked < maxEntitiesPerJob)
+        mentionsPicked += e.size
+        entitiesPicked += 1
+        needToAdd
+      })
+      tes.foreach(locked += _.id)
+      es ++= tes
+    }
     println("Job: mentions: %d, entities: %d" format(es.sumInts(_.size), es.size))
-    es.foreach(locked += _.id)
     //println("___ AFTER SENDING ___")
     //printMap()
     Some(EntitySet.fromEntities[R](es))
@@ -131,14 +139,14 @@ class CanopizedQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
     entityCanopies.getOrElseUpdate(e.id, new HashSet) ++= canopies
   })
 
-  override def pickIds = canopyEntities.sampleUniformly._2
+  override def pickIds = canopyEntities.map(_._2).filter(_.size > minEntitiesPerJob).sampleUniformly
 
   override def doneWork(wes: Seq[Entity[R]]) {
     for (e <- wes) {
       val canopies = entityCanopies(e.id)
       for (c <- canopies) {
         canopyEntities(c).remove(e.id)
-        if(canopyEntities(c).isEmpty) canopyEntities.remove(c)
+        if (canopyEntities(c).isEmpty) canopyEntities.remove(c)
       }
       entityCanopies.remove(e.id)
     }
