@@ -125,8 +125,8 @@ trait RemoteWorker[W <: Work, R <: Result] extends Master[W, R] {
   lazy val workerSystemConfigMap: HashMap[String, WorkerSystemConfig] = {
     val map = new HashMap[String, WorkerSystemConfig]
     for (wconfig <- workerSystemConfigs)
-      if (map.put(wconfig.hostname, wconfig) != None) {
-        log.error("Multiple worker configs represent the same host: " + wconfig.hostname)
+      if (map.put(wconfig.hostname + ":" + wconfig.port, wconfig) != None) {
+        log.error("Multiple worker configs represent the same host and port: " + wconfig.hostname + ":" + wconfig.port)
         throw new Error()
       }
     map
@@ -160,12 +160,13 @@ trait RandomRemoteWorker[W <: Work, R <: Result] extends RemoteWorker[W, R] {
  */
 trait LoadBalancingRemoteWorker[W <: Work, R <: Result] extends RemoteWorker[W, R] {
   override def createWorker(w: W, terminatedWorker: Option[ActorRef]) = {
-    val wconfig = if (terminatedWorker.isEmpty) pickHost else workerSystemConfigMap(terminatedWorker.get.path.address.host.get)
+    val wconfig = if (terminatedWorker.isEmpty) pickHost else workerSystemConfigMap(terminatedWorker.get.path.address.host.get + ":" + terminatedWorker.get.path.address.port.get)
     createWorker(wconfig)
   }
 }
 
 trait ReadWorkerConfigs {
   def workerConfigDir: String
+
   def workerSystemConfigs: Seq[WorkerSystemConfig] = WorkerSystemConfig.fromDir(workerConfigDir)
 }
