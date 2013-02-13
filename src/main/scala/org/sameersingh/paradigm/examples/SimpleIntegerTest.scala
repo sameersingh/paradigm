@@ -29,7 +29,9 @@ object RemoteClientApp {
 object LocalClientApp {
   def main(args: Array[String]) {
     println("Starting client")
-    val system = ActorSystem("TestWorkerSystem", ConfigFactory.load(Util.remoteConfig("127.0.0.1", 2554, "DEBUG")))
+    val cfg = Util.remoteConfig("127.0.0.1", 2554, "DEBUG")
+    println(cfg.toString)
+    val system = ActorSystem("TestWorkerSystem", ConfigFactory.load(cfg))
   }
 }
 
@@ -63,7 +65,7 @@ object TestMasters {
    */
   class TestMaster extends Master[Job, Job] with LoadBalancingRemoteWorker[Job, Job] {
 
-    val numWorkers = 5
+    val numWorkers = 1
 
     override def killWorkerSystemWhenDone = true
 
@@ -75,13 +77,13 @@ object TestMasters {
 
     def workerPort = 2554
 
-    def workerSystemConfigs = Seq("127.0.0.1", "blake.cs.umass.edu").map(host => WorkerSystemConfig(workerSystemName, host, workerPort))
+    def workerSystemConfigs = Seq("127.0.0.1").map(host => WorkerSystemConfig(workerSystemName, host, workerPort)) //, "blake.cs.umass.edu"
   }
 
   class TestSyncMaster extends TestMaster with SynchronousMaster[Job, Job]
 
   def main(args: Array[String]) {
-    val synchronous = true
+    val synchronous = false
     println("Start Master")
     val system = ActorSystem("TestMasterSystem", ConfigFactory.load(Util.remoteConfig("127.0.0.1", 2552, "DEBUG")))
     println("Creating master")

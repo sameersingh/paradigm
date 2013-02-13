@@ -27,8 +27,8 @@ class BasicQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
                                      val maxMentionsPerJob: Int,
                                      val numJobs: Int) extends CorefQueue[R] {
 
-  val minEntitiesPerJob = 2
-  val minMentionsPerJob = 2
+  def minEntitiesPerJob = 2
+  def minMentionsPerJob = 2
 
   val entities: HashMap[Long, Entity[R]] = new HashMap
   initEntities.foreach(e => entities(e.id) = e)
@@ -54,7 +54,7 @@ class BasicQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
     var mentionsPicked = 0
     var entitiesPicked = 0
     val es = new ArrayBuffer[Entity[R]]
-    while (es.length < minEntitiesPerJob) {
+    while ((entitiesPicked < minEntitiesPerJob || mentionsPicked < minMentionsPerJob) && locked.size < entities.size) {
       val tes = pickIds.shuffle()
             .filterNot(id => locked.contains(id)).map(entities(_)).filterNot(_.size == 0)
             .takeWhile(e => {
@@ -67,7 +67,7 @@ class BasicQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
       tes.foreach(locked += _.id)
       es ++= tes
     }
-    println("Job: mentions: %d, entities: %d" format(es.sumInts(_.size), es.size))
+    log.info("Job: mentions: %d, entities: %d" format(es.sumInts(_.size), es.size))
     //println("___ AFTER SENDING ___")
     //printMap()
     Some(EntitySet.fromEntities[R](es))
@@ -111,13 +111,13 @@ class BasicQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
   }
 
   def printMap(): Unit = {
-    println("num entities: " + entities.keys.size)
-    println("num mentions: " + entities.values.sumInts(_.size))
+    log.info("num entities: " + entities.keys.size)
+    log.info("num mentions: " + entities.values.sumInts(_.size))
     for (key <- entities.keys) {
       val e = entities(key)
-      println("--- %d%s (%d) ---" format(key, if (locked(key)) "*" else "", e.size))
+      log.info("--- %d%s (%d) ---" format(key, if (locked(key)) "*" else "", e.size))
       for (m <- e.mentions) {
-        println("   " + m.record)
+        log.info("   " + m.record)
       }
     }
   }
@@ -139,7 +139,7 @@ class CanopizedQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
     entityCanopies.getOrElseUpdate(e.id, new HashSet) ++= canopies
   })
 
-  override def pickIds = canopyEntities.map(_._2).filter(_.size > minEntitiesPerJob).sampleUniformly
+  override def pickIds = canopyEntities.map(_._2).sampleUniformly
 
   override def doneWork(wes: Seq[Entity[R]]) {
     for (e <- wes) {
