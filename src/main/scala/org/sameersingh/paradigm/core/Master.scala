@@ -1,10 +1,11 @@
 package org.sameersingh.paradigm.core
 
+import cc.factorie._
 import akka.actor._
 import akka.remote.RemoteScope
-import util.Random
 import collection.mutable.HashMap
 import org.sameersingh.paradigm.WorkerSystemConfig
+import scala.util.Random
 
 /**
  * @author sameer
@@ -160,7 +161,18 @@ trait RandomRemoteWorker[W <: Work, R <: Result] extends RemoteWorker[W, R] {
  */
 trait LoadBalancingRemoteWorker[W <: Work, R <: Result] extends RemoteWorker[W, R] {
   override def createWorker(w: W, terminatedWorker: Option[ActorRef]) = {
-    val wconfig = if (terminatedWorker.isEmpty) pickHost else workerSystemConfigMap(terminatedWorker.get.path.address.host.get + ":" + terminatedWorker.get.path.address.port.get)
+    val wconfig = if (terminatedWorker.isEmpty) pickHost
+    else {
+      if (terminatedWorker.get.path.address.port.isEmpty && terminatedWorker.get.path.address.host.isDefined) {
+        log.info("port empty: " + terminatedWorker.get.path + ", " + terminatedWorker.get.path.address.hostPort)
+        //workerSystemConfigMap.filter(sv => sv._1.startsWith(terminatedWorker.get.path.address.host.get)).toSeq.sampleUniformly._2
+        pickHost
+      } else if (terminatedWorker.get.path.address.host.isEmpty) {
+        log.info("host empty: " + terminatedWorker.get.path + ", " + terminatedWorker.get.path.address.hostPort)
+        //workerSystemConfigMap.sampleUniformly._2
+        pickHost
+      } else workerSystemConfigMap(terminatedWorker.get.path.address.host.get + ":" + terminatedWorker.get.path.address.port.get)
+    }
     createWorker(wconfig)
   }
 }

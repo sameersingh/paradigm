@@ -23,15 +23,20 @@ object Util {
   }
 
   def remoteConfig(hostname: String, port: Int, logLevel: String = "INFO"): Config =
-    mergedConfig.withFallback(ConfigFactory.parseString( """
+    ConfigFactory.parseString( """
   akka {
     loglevel = %s
+    loggers = ["akka.event.Logging$DefaultLogger"]
+    log-config-on-start = on
 
     actor {
       provider = "akka.remote.RemoteActorRefProvider"
     }
 
     remote {
+      log-received-messages = on
+      log-sent-messages = on
+      log-remote-lifecycle-events = on
       transport = "akka.remote.netty.NettyRemoteTransport"
       netty {
         hostname = "%s"
@@ -39,7 +44,7 @@ object Util {
       }
     }
   }
-                                                         """.format(logLevel.toString, hostname, port))) //.withFallback()
+                                                         """.format(logLevel.toString, hostname, port)).withFallback(mergedConfig) //mergedConfig.withFallback(
 
   def remoteWorkerConfig(cfg: WorkerSystemConfig, logLevel: String = "INFO"): Config = remoteConfig(cfg.hostname, cfg.port, logLevel)
 
