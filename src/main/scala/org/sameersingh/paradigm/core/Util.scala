@@ -27,7 +27,7 @@ object Util {
   akka {
     loglevel = %s
     loggers = ["akka.event.Logging$DefaultLogger"]
-    log-config-on-start = on
+    log-config-on-start = off
 
     actor {
       provider = "akka.remote.RemoteActorRefProvider"

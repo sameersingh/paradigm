@@ -4,7 +4,6 @@ import cc.factorie._
 import org.sameersingh.paradigm.core.Queue
 import org.sameersingh.utils.coref.{Entity, MentionRecord, Canopizer}
 import collection.mutable.{HashSet, HashMap, ArrayBuffer}
-import collection.mutable
 
 /**
  * @author sameer
@@ -67,7 +66,7 @@ class BasicQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
       tes.foreach(locked += _.id)
       es ++= tes
     }
-    log.info("Job: mentions: %d, entities: %d" format(es.sumInts(_.size), es.size))
+    println("Job: mentions: %d, entities: %d" format(es.sumInts(_.size), es.size))
     //println("___ AFTER SENDING ___")
     //printMap()
     Some(EntitySet.fromEntities[R](es))
@@ -111,13 +110,13 @@ class BasicQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
   }
 
   def printMap(): Unit = {
-    log.info("num entities: " + entities.keys.size)
-    log.info("num mentions: " + entities.values.sumInts(_.size))
+    println("num entities: " + entities.keys.size)
+    println("num mentions: " + entities.values.sumInts(_.size))
     for (key <- entities.keys) {
       val e = entities(key)
-      log.info("--- %d%s (%d) ---" format(key, if (locked(key)) "*" else "", e.size))
+      println("--- %d%s (%d) ---" format(key, if (locked(key)) "*" else "", e.size))
       for (m <- e.mentions) {
-        log.info("   " + m.record)
+        println("   " + m.record)
       }
     }
   }
