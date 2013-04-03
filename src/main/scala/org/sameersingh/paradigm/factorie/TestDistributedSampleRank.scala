@@ -46,12 +46,16 @@ object TestSyntheticClassification {
     val trainingActor = system.actorOf(Props(new DistributedSampleRankTrainer[Label](model)))
 
     val sampler = new VariableSettingsSampler[Label](new TemplateModel(new Emission), new TemplateModel(new HammingTemplate[Label])) with DistributedSampleRank[Label] {
-      def trainer = trainingActor
+      def trainer = Some(trainingActor)
     }
 
     labels.foreach(_.setRandomly())
     sampler.processAll(labels, 10)
+    //sampler.updateWeights
     trainingActor ! SampleRankMessages.Stop()
+    while(!trainingActor.isTerminated) {
+      Thread.sleep(100)
+    }
 
     // without copying weights
     labels.foreach(_.setRandomly())

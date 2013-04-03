@@ -96,7 +96,7 @@ trait DistributedSampleRank[C] extends ProposalSampler[C] {
 
   implicit val timeout = Timeout(5 seconds)
 
-  def trainer: ActorRef
+  def trainer: Option[ActorRef]
 
   val numSamplesBetweenWeightRequest: Int = 1000
 
@@ -125,8 +125,20 @@ trait DistributedSampleRank[C] extends ProposalSampler[C] {
   }
 
   def process(ps: Seq[Proposal]): Unit = {
-    samplesToRequest -= 1
-    if (samplesToRequest == 0) {
+    if (trainer.isDefined) {
+      samplesToRequest -= 1
+      if (samplesToRequest == 0) {
+        updateWeights
+        samplesToRequest = numSamplesBetweenWeightRequest
+      }
+      computeGradient(ps).foreach(g => trainer.get ! SampleRankMessages.UseGradient(g))
+    }
+  }
+
+  proposalsHooks += process
+
+  def updateWeights {
+    if (trainer.isDefined) {
       print("Requesting updated weights... ")
       def doSomething(w: SampleRankMessages.UpdatedWeights) = {
         println("w: " + w)
@@ -136,18 +148,11 @@ trait DistributedSampleRank[C] extends ProposalSampler[C] {
             f.weights(i) = d
         }
       }
-      val future = (trainer ? SampleRankMessages.RequestWeights()) //.mapTo[SampleRankMessages.UpdatedWeights]
+      val future = (trainer.get ? SampleRankMessages.RequestWeights()) //.mapTo[SampleRankMessages.UpdatedWeights]
       future.foreach(a => doSomething(a.asInstanceOf[SampleRankMessages.UpdatedWeights]))
       println("Done")
-      samplesToRequest = numSamplesBetweenWeightRequest
     }
-
-    computeGradient(ps).foreach(g => trainer ! SampleRankMessages.UseGradient(g))
   }
-
-  proposalsHooks += process
-
-  //def processAll(cs: Seq[C], iters: Int = 1) = (0 until iters).foreach(i => cs.foreach(c => process1(c)))
 }
 
 // TODO: support for priorities amongst gradients by using an additional actor for updates
