@@ -37,7 +37,7 @@ object TestSyntheticClassification {
 
   def main(args: Array[String]) {
     val numVars = 10
-    val tokens = (0 until numVars).map(i => new Token("w" + (i), "L" + (i % 2)))
+    val tokens = (0 until numVars).map(i => new Token("w" + (i), "L" + (i % 3)))
     println(tokens.map(t => (t, t.label)).mkString(", "))
     val labels = tokens.map(_.label)
 
@@ -45,7 +45,9 @@ object TestSyntheticClassification {
     val model = new TemplateModel(new Emission)
     val trainingActor = system.actorOf(Props(new DistributedSampleRankTrainer[Label](model)))
 
-    val sampler = new VariableSettingsSampler[Label](new TemplateModel(new Emission), new TemplateModel(new HammingTemplate[Label])) with DistributedSampleRank[Label] {
+    val sampler = new VariableSettingsSampler[Label](
+      new TemplateModel(new Emission),
+      new TemplateModel(new HammingTemplate[Label])) with DistributedSampleRank[Label] {
       def trainer = Some(trainingActor)
     }
 
