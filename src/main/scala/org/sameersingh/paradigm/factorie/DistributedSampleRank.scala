@@ -134,7 +134,7 @@ trait DistributedSampleRank[C] extends ProposalSampler[C] {
       badObjective.diff.undo
       model.factorsOfFamilyClass[DotFamily](badObjective.diff).foreach(
         f => gradient.accumulate(f.family, f.currentStatistics, 1.0))
-      Some(SampleRankGradient(objectiveValue, gradient.toSerializable, None)) // Some(priority)
+      Some(SampleRankGradient(objectiveValue, gradient.toSerializable, Some(priority)))
     } else None
   }
 
