@@ -35,12 +35,14 @@ object Rexa {
   val masterShouldKillWorkers = false
 
   def newSampler(model: TemplateModel) =
-    // TODO Use a specific sampler
+  // TODO Use a specific sampler
     new HierCorefSampler[Entity](model) {
-    def newEntity = null
+      def newEntity = null
 
-    def sampleAttributes(e: Rexa.Entity)(implicit d: DiffList) {}
-  }
+      def sampleAttributes(e: Rexa.Entity)(implicit d: DiffList) {}
+
+      protected def initializeAttributesOfNewRoot(e1: Rexa.Entity, e2: Rexa.Entity, parent: Rexa.Entity)(implicit d: DiffList) {}
+    }
 
   def model: TemplateModel = null
 }
