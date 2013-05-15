@@ -41,10 +41,11 @@ object Util {
       netty {
         hostname = "%s"
         port = %d
+        message-frame-size = 100 MiB
       }
     }
   }
-                                                         """.format(logLevel.toString, hostname, port)).withFallback(mergedConfig) //mergedConfig.withFallback(
+                               """.format(logLevel.toString, hostname, port)).withFallback(mergedConfig) //mergedConfig.withFallback(
 
   def remoteWorkerConfig(cfg: WorkerSystemConfig, logLevel: String = "INFO"): Config = remoteConfig(cfg.hostname, cfg.port, logLevel)
 
