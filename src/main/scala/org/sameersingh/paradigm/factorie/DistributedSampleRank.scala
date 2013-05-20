@@ -68,7 +68,7 @@ object SampleRankMessages {
 
 }
 
-class GradientAccumulator extends TensorsAccumulator {
+class GradientAccumulator(namedSlots: TensorSetKeyNames) extends TensorSetAccumulator {
 
   val gradient: HashMap[String, HashMap[Int, Double]] = new HashMap
 
@@ -76,28 +76,39 @@ class GradientAccumulator extends TensorsAccumulator {
 
   def combine(ta: Accumulator[Tensor]) = throw new Error("Not implemented.")
 
-  def accumulator(family: DotFamily) = throw new Error("Not implemented.")
+  def accumulator(family: TensorSetKey) = throw new Error("Not implemented.")
 
-  def accumulate(family: Any, index: Int, value: Double) = throw new Error("Not implemented.")
-
-  def accumulateOuter(family: Any, t1: Tensor1, t2: Tensor1) = throw new Error("Not implemented.")
+  def accumulate(family: TensorSetKey, index: Int, value: Double) = throw new Error("Not implemented.")
 
   def accumulate(index: Int, value: Double) = throw new Error("Not implemented.")
 
   def accumulate(t: Tensor, factor: Double) = throw new Error("Not implemented.")
 
-  def accumulate(a: Any, t: Tensor, factor: Double) = a match {
-    case family: DotFamily => {
-      val map = gradient.getOrElseUpdate(family.factorName, new HashMap)
-      t.foreachActiveElement((i, d) => map(i) = map.getOrElse(i, 0.0) + d * factor)
-    }
+  def accumulate(a: TensorSetKey, t: Tensor, factor: Double) = {
+    val map = gradient.getOrElseUpdate(namedSlots.keyToName(a), new HashMap)
+    t.foreachActiveElement((i, d) => map(i) = map.getOrElse(i, 0.0) + d * factor)
   }
 
-  def accumulate(family: Any, t: Tensor): Unit = accumulate(family, t, 1.0)
+  def accumulate(family: TensorSetKey, t: Tensor): Unit = accumulate(family, t, 1.0)
 
   def toSerializable: SerializableObjects.Tensors = {
     SerializableObjects.Tensors(gradient.map(p => (p._1, SerializableObjects.SparseTensor(p._2.toSeq))).toMap)
   }
+}
+
+// TODO: We could also introduce "NamedTensorSetKey" that just define a new TensorSetKey and associate with it a name for purposes
+// of nicer serialization and distributed message stuff - otherwise you just get your order-specific serialization for free -luke
+
+class DotFamilyKeyNames(families: Seq[DotFamily]) extends TensorSetKeyNames {
+  private val namesToKeys = families.map(f => (f.factorName, f.weights)).toMap
+  private val keysToNames = families.map(f => (f.weights, f.factorName)).toMap
+  def nameToKey(name: String) = namesToKeys(name)
+  def keyToName(key: TensorSetKey) = keysToNames(key)
+}
+
+trait TensorSetKeyNames {
+  def nameToKey(name: String): TensorSetKey
+  def keyToName(slot: TensorSetKey): String
 }
 
 trait DistributedSampleRank[C] extends ProposalSampler[C] {
@@ -111,7 +122,9 @@ trait DistributedSampleRank[C] extends ProposalSampler[C] {
 
   def trainer: Option[ActorRef]
 
-  def modelWithWeights = model.asInstanceOf[Model with Weights]
+  def keyNames: TensorSetKeyNames
+
+  def modelWithWeights = model.asInstanceOf[Model with WeightsDef]
 
   val numSamplesBetweenWeightRequest: Int = 1000
   val batchSize: Int = 100
@@ -120,23 +133,23 @@ trait DistributedSampleRank[C] extends ProposalSampler[C] {
   var batchedGradients = new ArrayBuffer[SampleRankGradient](batchSize * 2)
 
   def computeGradient(proposals: Seq[Proposal]): Option[SampleRankGradient] = {
-    val gradient = new GradientAccumulator
+    val gradient = new GradientAccumulator(keyNames)
     val (goodObjective, badObjective) = proposals.max2ByDouble(_.objectiveScore)
     val objectiveValue = goodObjective.objectiveScore - badObjective.objectiveScore
     val priority = badObjective.modelScore - goodObjective.modelScore
     if (objectiveValue > 0.0) {
       goodObjective.diff.redo
       model.factorsOfFamilyClass[DotFamily](goodObjective.diff).foreach(
-        f => gradient.accumulate(f.family, f.currentStatistics, 1.0))
+        f => gradient.accumulate(f.family.weights, f.currentStatistics, 1.0))
       goodObjective.diff.undo
       model.factorsOfFamilyClass[DotFamily](goodObjective.diff).foreach(
-        f => gradient.accumulate(f.family, f.currentStatistics, -1.0))
+        f => gradient.accumulate(f.family.weights, f.currentStatistics, -1.0))
       badObjective.diff.redo
       model.factorsOfFamilyClass[DotFamily](badObjective.diff).foreach(
-        f => gradient.accumulate(f.family, f.currentStatistics, -1.0))
+        f => gradient.accumulate(f.family.weights, f.currentStatistics, -1.0))
       badObjective.diff.undo
       model.factorsOfFamilyClass[DotFamily](badObjective.diff).foreach(
-        f => gradient.accumulate(f.family, f.currentStatistics, 1.0))
+        f => gradient.accumulate(f.family.weights, f.currentStatistics, 1.0))
       Some(SampleRankGradient(objectiveValue, gradient.toSerializable, Some(priority)))
     } else None
   }
@@ -163,9 +176,9 @@ trait DistributedSampleRank[C] extends ProposalSampler[C] {
       print("Requesting updated weights... ")
       def doSomething(w: SampleRankMessages.UpdatedWeights) = {
         println("w: " + w)
-        for (f <- modelWithWeights.weights.keys.map(_.asInstanceOf[DotFamily])) {
+        for (f <- modelWithWeights.weightsSet.keys) {
           println(w.weights)
-          w.weights.tensors(f.factorName).assignTo(f.weightsTensor)
+          w.weights.tensors(keyNames.keyToName(f)).assignTo(f.value)
         }
       }
       val future = (trainer.get ? SampleRankMessages.RequestWeights()) //.mapTo[SampleRankMessages.UpdatedWeights]
@@ -175,21 +188,21 @@ trait DistributedSampleRank[C] extends ProposalSampler[C] {
   }
 }
 
-class DistributedSampleRankUpdater[C](val model: Model with Weights, optimizer: GradientOptimizer = new optimize.MIRA) extends Actor {
-  val modelWeights = model.weights
+class DistributedSampleRankUpdater[C](val model: Model with WeightsDef, keyNames: TensorSetKeyNames, optimizer: GradientOptimizer = new optimize.MIRA) extends Actor {
+  val modelWeights = model.weightsSet
 
   var learningMargin = 1.0
 
   def updateWeights(grad: SerializableObjects.SampleRankGradient): Unit = {
-    val modelScore = model.weights.keys.map(_.asInstanceOf[DotFamily]).foldLeft(0.0)(
-      (s, f) => s + grad.gradient.tensors(f.factorName).active.foldLeft(0.0)(
-        (s, id) => s + f.weightsTensor(id._1) * id._2))
+    val modelScore = model.weightsSet.keys.foldLeft(0.0)(
+      (s, f) => s + grad.gradient.tensors(keyNames.keyToName(f)).active.foldLeft(0.0)(
+        (s, id) => s + f.value(id._1) * id._2))
     if (modelScore <= 0.0) {
-      val gradientAccumulator = new LocalTensorsAccumulator(modelWeights.blankSparseCopy)
-      for (f <- model.weights.keys.map(_.asInstanceOf[DotFamily]))
-        for ((i, d) <- grad.gradient.tensors(f.factorName).active) gradientAccumulator.accumulate(f, i, d)
+      val gradientAccumulator = new LocalTensorSetAccumulator(modelWeights.blankSparseCopy)
+      for (f <- model.weightsSet.keys)
+        for ((i, d) <- grad.gradient.tensors(keyNames.keyToName(f)).active) gradientAccumulator.accumulate(f, i, d)
       // TODO incorporate margin?
-      optimizer.step(modelWeights, gradientAccumulator.tensor, -1.0)
+      optimizer.step(modelWeights, gradientAccumulator.tensorSet, -1.0)
     }
   }
 
@@ -200,7 +213,7 @@ class DistributedSampleRankUpdater[C](val model: Model with Weights, optimizer: 
   }
 }
 
-class DistributedSampleRankTrainer[C](val model: Model with Weights, optimizer: GradientOptimizer = new optimize.MIRA) extends Actor {
+class DistributedSampleRankTrainer[C](val model: Model with WeightsDef, keyNames: TensorSetKeyNames, optimizer: GradientOptimizer = new optimize.MIRA) extends Actor {
 
   import SerializableObjects._
 
@@ -208,7 +221,7 @@ class DistributedSampleRankTrainer[C](val model: Model with Weights, optimizer: 
     def compare(x: SampleRankGradient, y: SampleRankGradient) = x.priority.get.compare(y.priority.get)
   })
 
-  val updatingActor = context.system.actorOf(Props(new DistributedSampleRankUpdater[C](model, optimizer)))
+  val updatingActor = context.system.actorOf(Props(new DistributedSampleRankUpdater[C](model, keyNames, optimizer)))
 
   def processGradient(g: SampleRankGradient) {
     if (g.priority.isDefined) {
@@ -222,10 +235,10 @@ class DistributedSampleRankTrainer[C](val model: Model with Weights, optimizer: 
     case m: SampleRankMessages.UseGradients => m.gradients.foreach(g => processGradient(g))
     case m: SampleRankMessages.RequestWeights => {
       println("Received weights request")
-      sender ! SampleRankMessages.UpdatedWeights(Tensors(model.weights.keys.map(_.asInstanceOf[DotFamily]).map(
-        f => (f.factorName,
-              if (f.weightsTensor.isDense) DenseTensor(f.weightsTensor.asArray) // or toArray?
-              else SparseTensor(f.weightsTensor.activeElements.toSeq))).toMap))
+      sender ! SampleRankMessages.UpdatedWeights(Tensors(model.weightsSet.keys.map(
+        f => (keyNames.keyToName(f),
+              if (f.value.isDense) DenseTensor(f.value.asArray) // or toArray?
+              else SparseTensor(f.value.activeElements.toSeq))).toMap))
     }
     case m: SampleRankMessages.Stop => {
       updatingActor ! SampleRankMessages.Stop
