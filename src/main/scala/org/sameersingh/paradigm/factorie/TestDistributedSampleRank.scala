@@ -25,7 +25,7 @@ object TestSyntheticClassification {
     override def domain = LabelDomain
   }
 
-  class Emission(model: WeightsDef) extends DotTemplateWithStatistics2[Label, Token] {
+  class Emission(model: Parameters) extends DotTemplateWithStatistics2[Label, Token] {
     setFactorName("Emission")
 
     val weights = model.Weights(new DenseTensor2(LabelDomain.size, TokenDomain.size))
@@ -69,7 +69,7 @@ object TestSyntheticClassification {
     // without copying weights
     labels.foreach(_.setRandomly())
     sampler.temperature = 0.001
-    println(sampler.modelWithWeights.weightsSet.keys.map(_.value.mkString(", ")))
+    println(sampler.modelWithWeights.parameters.keys.map(_.value.mkString(", ")))
     for (iter <- 0 until 1) {
       sampler.processAll(labels)
     }
@@ -77,15 +77,15 @@ object TestSyntheticClassification {
     println(sampler.objective.currentScore(labels))
 
     // copy weights
-    for (f <- sampler.modelWithWeights.weightsSet.keys) {
-      val fw = localModel.weightsSet.keys.filter(k => localModelKeyNames.keyToName(k) == samplerModelKeyNames.keyToName(f)).head.value
+    for (f <- sampler.modelWithWeights.parameters.keys) {
+      val fw = localModel.parameters.keys.filter(k => localModelKeyNames.keyToName(k) == samplerModelKeyNames.keyToName(f)).head.value
       for (i <- fw.activeDomain) {
         f.value.update(i, fw(i))
       }
     }
 
     // with copying weights
-    println(sampler.modelWithWeights.weightsSet.keys.map(_.value.mkString(", ")))
+    println(sampler.modelWithWeights.parameters.keys.map(_.value.mkString(", ")))
     labels.foreach(_.setRandomly())
     sampler.temperature = 0.001
     for (iter <- 0 until 1) {
