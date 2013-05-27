@@ -198,7 +198,7 @@ class DistributedSampleRankUpdater[C](val model: Model with Parameters, keyNames
       (s, f) => s + grad.gradient.tensors(keyNames.keyToName(f)).active.foldLeft(0.0)(
         (s, id) => s + f.value(id._1) * id._2))
     if (modelScore <= 0.0) {
-      val gradientAccumulator = new LocalWeightsMapAccumulator(modelWeights.blankSparseCopy)
+      val gradientAccumulator = new LocalWeightsMapAccumulator(modelWeights.blankSparseMap)
       for (f <- model.parameters.keys)
         for ((i, d) <- grad.gradient.tensors(keyNames.keyToName(f)).active) gradientAccumulator.accumulate(f, i, d)
       // TODO incorporate margin?
