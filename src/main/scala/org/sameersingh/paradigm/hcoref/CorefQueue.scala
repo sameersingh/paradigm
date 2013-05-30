@@ -1,7 +1,7 @@
 package org.sameersingh.paradigm.hcoref
 
 import org.sameersingh.paradigm.core.Queue
-import cc.factorie.app.nlp.coref.HierEntity
+import cc.factorie.app.nlp.hcoref.HierEntity
 
 /**
  * @author sameer

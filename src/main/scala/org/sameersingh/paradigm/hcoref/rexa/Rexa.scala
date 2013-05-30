@@ -1,7 +1,7 @@
 package org.sameersingh.paradigm.hcoref.rexa
 
 import org.sameersingh.paradigm.hcoref.EntitySet
-import cc.factorie.app.nlp.coref.HierCorefSampler
+import cc.factorie.app.nlp.hcoref.HierCorefSampler
 import cc.factorie.{TemplateModel, Model, DiffList}
 import cc.factorie.app.bib.AuthorEntity
 

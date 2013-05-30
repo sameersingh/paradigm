@@ -1,6 +1,5 @@
 package org.sameersingh.paradigm.coref
 
-import cc.factorie.app.nlp.coref.HierEntity
 import akka.actor.ActorRef
 import org.sameersingh.paradigm.core.{LoadBalancingRemoteWorker, Master}
 import org.sameersingh.utils.coref.MentionRecord

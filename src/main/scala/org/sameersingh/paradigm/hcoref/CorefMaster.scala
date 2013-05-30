@@ -1,6 +1,6 @@
 package org.sameersingh.paradigm.hcoref
 
-import cc.factorie.app.nlp.coref.HierEntity
+import cc.factorie.app.nlp.hcoref.HierEntity
 import akka.actor.ActorRef
 import org.sameersingh.paradigm.core.{LoadBalancingRemoteWorker, Master}
 

@@ -1,7 +1,7 @@
 package org.sameersingh.paradigm.hcoref
 
 import cc.factorie._
-import app.nlp.coref.{HierEntity, HierCorefSampler, Entity}
+import app.nlp.hcoref.{HierEntity, HierCorefSampler, Entity}
 import org.sameersingh.paradigm.core._
 import collection.mutable.ArrayBuffer
 
