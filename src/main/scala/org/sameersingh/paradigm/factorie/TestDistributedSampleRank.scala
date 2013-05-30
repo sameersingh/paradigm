@@ -31,6 +31,7 @@ object TestSyntheticClassification {
     val weights = model.Weights(new DenseTensor2(LabelDomain.size, TokenDomain.size))
 
     def unroll1(l: Label) = Factor(l, l.token)
+
     def unroll2(t: Token) = throw new Error("cannot change Token")
   }
 
@@ -41,20 +42,23 @@ object TestSyntheticClassification {
     val labels = tokens.map(_.label)
 
     val system = ActorSystem("Local")
-    val localModel = new TemplateModel
-    val localEmission = new Emission(localModel)
-    localModel += localEmission
-    val localModelKeyNames = new DotFamilyKeyNames(Seq(localEmission))
+    val localModel = new TemplateModel with Parameters {
+      this += new Emission(this)
+    }
+    //localModel += localEmission
+    val localModelKeyNames = new DotFamilyKeyNames(localModel.templates.map(_.asInstanceOf[DotFamily]))
     val trainingActor = system.actorOf(Props(new DistributedSampleRankTrainer[Label](localModel, localModelKeyNames)))
 
-    val samplerModel = new TemplateModel
-    val samplerEmission = new Emission(samplerModel)
-    samplerModel += samplerEmission
-    val samplerModelKeyNames = new DotFamilyKeyNames(Seq(samplerEmission))
+    val samplerModel = new TemplateModel with Parameters {
+      this += new Emission(this)
+    }
+    //samplerModel += samplerEmission
+    val samplerModelKeyNames = new DotFamilyKeyNames(samplerModel.templates.map(_.asInstanceOf[DotFamily]))
 
     val sampler = new VariableSettingsSampler[Label](samplerModel, HammingObjective)
-      with DistributedSampleRank[Label] {
+          with DistributedSampleRank[Label] {
       def trainer = Some(trainingActor)
+
       val keyNames = samplerModelKeyNames
     }
 
@@ -62,7 +66,7 @@ object TestSyntheticClassification {
     sampler.processAll(labels, 10)
     //sampler.updateWeights
     trainingActor ! SampleRankMessages.Stop()
-    while(!trainingActor.isTerminated) {
+    while (!trainingActor.isTerminated) {
       Thread.sleep(100)
     }
 
