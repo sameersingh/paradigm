@@ -7,8 +7,6 @@ import la._
 import util.Accumulator
 import scala.collection.mutable.{ArrayBuffer, HashMap}
 import collection.mutable
-import akka.util.Timeout._
-import akka.util._
 
 /**
  * @author sameer
@@ -102,12 +100,15 @@ class GradientAccumulator(namedSlots: TensorSetKeyNames) extends WeightsMapAccum
 class DotFamilyKeyNames(families: Seq[DotFamily]) extends TensorSetKeyNames {
   private val namesToKeys = families.map(f => (f.factorName, f.weights)).toMap
   private val keysToNames = families.map(f => (f.weights, f.factorName)).toMap
+
   def nameToKey(name: String) = namesToKeys(name)
+
   def keyToName(key: Weights) = keysToNames(key)
 }
 
 trait TensorSetKeyNames {
   def nameToKey(name: String): Weights
+
   def keyToName(slot: Weights): String
 }
 
@@ -115,10 +116,10 @@ trait DistributedSampleRank[C] extends ProposalSampler[C] {
 
   import SerializableObjects._
   import akka.pattern.ask
-  import akka.util._
-  import akka.util.duration._
+  import akka.util.Timeout
+  import scala.concurrent.duration._
 
-  implicit val timeout : Timeout = new Timeout(5, java.util.concurrent.TimeUnit.SECONDS)
+  implicit val timeout: Timeout = Timeout(5 seconds)
 
   def trainer: Option[ActorRef]
 

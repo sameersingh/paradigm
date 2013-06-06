@@ -2,7 +2,7 @@ package org.sameersingh.paradigm
 
 import org.junit._
 import Assert._
-import util.Random
+import scala.util.Random
 
 /**
  * @author sameer
