@@ -21,7 +21,7 @@
     <encoding>UTF-8</encoding>
     <scala.version>2.10.1</scala.version>
     <utils.version>0.1.1-SNAPSHOT</utils.version>
-    <factorie.version>1.0.0-M4</factorie.version>
+    <factorie.version>1.0-SNAPSHOT</factorie.version>
   </properties>
 
   <repositories>
