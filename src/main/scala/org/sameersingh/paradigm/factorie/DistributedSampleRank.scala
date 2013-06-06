@@ -2,13 +2,13 @@ package org.sameersingh.paradigm.factorie
 
 import cc.factorie._
 import akka.actor.{Props, ActorRef, Actor}
-import cc.factorie.optimize.{GradientOptimizer, Example}
+import cc.factorie.optimize.GradientOptimizer
 import la._
-import util.{Accumulator, DoubleAccumulator}
+import util.Accumulator
 import scala.collection.mutable.{ArrayBuffer, HashMap}
 import collection.mutable
-import akka.dispatch.{Await, Future}
-import akka.actor.Status.{Failure, Success}
+import akka.util.Timeout._
+import akka.util._
 
 /**
  * @author sameer
@@ -17,7 +17,7 @@ import akka.actor.Status.{Failure, Success}
 object SerializableObjects {
 
   // class to represent a bunch of weights and gradients
-  case class Tensor() {
+  abstract class Tensor() {
     def active: Seq[(Int, Double)] = Seq.empty
 
     def assignTo(t: cc.factorie.la.Tensor): Unit = {}
@@ -118,7 +118,7 @@ trait DistributedSampleRank[C] extends ProposalSampler[C] {
   import akka.util._
   import akka.util.duration._
 
-  implicit val timeout = Timeout(5 seconds)
+  implicit val timeout : Timeout = new Timeout(5, java.util.concurrent.TimeUnit.SECONDS)
 
   def trainer: Option[ActorRef]
 
@@ -173,6 +173,7 @@ trait DistributedSampleRank[C] extends ProposalSampler[C] {
 
   def updateWeights {
     if (trainer.isDefined) {
+      import scala.concurrent.ExecutionContext.Implicits.global
       print("Requesting updated weights... ")
       def doSomething(w: SampleRankMessages.UpdatedWeights) = {
         println("w: " + w)
@@ -188,7 +189,7 @@ trait DistributedSampleRank[C] extends ProposalSampler[C] {
   }
 }
 
-class DistributedSampleRankUpdater[C](val model: Model with Parameters, keyNames: TensorSetKeyNames, optimizer: GradientOptimizer = new optimize.MIRA) extends Actor {
+class DistributedSampleRankUpdater[C](val model: Model with Parameters, keyNames: TensorSetKeyNames, optimizer: GradientOptimizer) extends Actor {
   val modelWeights = model.parameters
 
   var learningMargin = 1.0
@@ -206,14 +207,14 @@ class DistributedSampleRankUpdater[C](val model: Model with Parameters, keyNames
     }
   }
 
-  protected def receive = {
+  def receive = {
     case m: SampleRankMessages.UseGradient => updateWeights(m.gradient)
     case m: SampleRankMessages.UseGradients => m.gradients.foreach(g => updateWeights(g))
     case m: SampleRankMessages.Stop => context.system.shutdown()
   }
 }
 
-class DistributedSampleRankTrainer[C](val model: Model with Parameters, keyNames: TensorSetKeyNames, optimizer: GradientOptimizer = new optimize.MIRA) extends Actor {
+class DistributedSampleRankTrainer[C](val model: Model with Parameters, keyNames: TensorSetKeyNames, optimizer: GradientOptimizer) extends Actor {
 
   import SerializableObjects._
 
@@ -230,7 +231,7 @@ class DistributedSampleRankTrainer[C](val model: Model with Parameters, keyNames
     } else updatingActor ! SampleRankMessages.UseGradient(g)
   }
 
-  protected def receive = {
+  def receive = {
     case m: SampleRankMessages.UseGradient => processGradient(m.gradient)
     case m: SampleRankMessages.UseGradients => m.gradients.foreach(g => processGradient(g))
     case m: SampleRankMessages.RequestWeights => {

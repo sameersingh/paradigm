@@ -47,7 +47,7 @@ object TestSyntheticClassification {
     }
     //localModel += localEmission
     val localModelKeyNames = new DotFamilyKeyNames(localModel.templates.map(_.asInstanceOf[DotFamily]))
-    val trainingActor = system.actorOf(Props(new DistributedSampleRankTrainer[Label](localModel, localModelKeyNames)))
+    val trainingActor = system.actorOf(Props(new DistributedSampleRankTrainer[Label](localModel, localModelKeyNames, new optimize.AdaGrad(1.0, 0.1))))
 
     val samplerModel = new TemplateModel with Parameters {
       this += new Emission(this)

@@ -25,7 +25,7 @@ class SerializationTest {
     val e = createEntity()
     println("master: " + e)
     val a = ActorSystem("TestWorkerSystem", ConfigFactory.load(Util.remoteConfig("127.0.0.1", 2554, "DEBUG"))).actorOf(Props(new Actor {
-      protected def receive = { case e: SerEntity[BasicRecord] => println("slave:  " + e) }
+      def receive = { case e: SerEntity[BasicRecord] => println("slave:  " + e) }
     }))
     a ! e
   }
@@ -38,7 +38,7 @@ class SerializationTest {
     val es = EntitySet[BasicRecord](Seq(e1,e2,e3))
     println("master: " + es)
     val a = ActorSystem("TestWorkerSystem", ConfigFactory.load(Util.remoteConfig("127.0.0.1", 2555, "DEBUG"))).actorOf(Props(new Actor {
-      protected def receive = { case es: EntitySet[BasicRecord] => println("slave:  " + es) }
+      def receive = { case es: EntitySet[BasicRecord] => println("slave:  " + es) }
     }))
     a ! es
   }

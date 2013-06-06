@@ -49,7 +49,7 @@ abstract class Master[W <: Work, R <: Result] extends Actor with ActorLogging {
 
   def props: Props
 
-  protected def receive = {
+  def receive = {
     case MasterMessages.Start() => log.debug("Start"); start
     case MasterMessages.Done() => log.debug("Done"); done
     case MasterMessages.WorkDone(w: W, r: R) =>

@@ -12,7 +12,7 @@ trait SynchronousMaster[W <: Work, R <: Result] extends Master[W, R] {
   // keeps track of whether the current round is the last round or not
   private var lastRound = false
 
-  override protected def receive = {
+  override def receive = {
     case MasterMessages.Start() => log.debug("Start"); start
     case MasterMessages.Done() => log.debug("Done"); done
     case MasterMessages.WorkDone(w: W, r: R) =>

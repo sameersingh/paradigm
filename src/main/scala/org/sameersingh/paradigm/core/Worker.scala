@@ -17,7 +17,7 @@ object WorkerMessages {
 trait CustomWorkerMessage
 
 abstract class Worker[W <: Work, R <: Result] extends Actor with ActorLogging {
-  protected def receive = {
+  def receive = {
     case WorkerMessages.WorkOnThis(w: W) => {
       log.debug("Received work: %s".format(w))
       val r = doWork(w)
