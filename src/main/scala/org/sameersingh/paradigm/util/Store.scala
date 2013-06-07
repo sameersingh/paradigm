@@ -5,6 +5,9 @@ import collection.mutable.{HashMap, HashSet}
 import cc.factorie._
 import com.redis.RedisClient
 import com.redis.serialization.{Parse, Format}
+import java.util.LinkedHashSet
+import java.util
+import scala.collection.mutable
 
 /**
  * @author sameer
@@ -34,8 +37,8 @@ abstract class Store {
 
 class InMemStore extends Store {
   val unlocked: HashSet[Id] = new HashSet()
-  val entityCanopies: HashMap[Id, HashSet[String]] = new HashMap
-  val canopyEntities: HashMap[String, HashSet[Id]] = new HashMap
+  val entityCanopies: mutable.LinkedHashMap[Id, mutable.LinkedHashSet[String]] = new mutable.LinkedHashMap
+  val canopyEntities: mutable.LinkedHashMap[String, mutable.LinkedHashSet[Id]] = new mutable.LinkedHashMap
 
   def randomUnlocked() = if (unlocked.size > 0) unlocked.sampleUniformly else null
 
@@ -60,18 +63,23 @@ class InMemStore extends Store {
     // remove from locking
     unlocked -= e
     // remove from reverse maps
-    for (canopy <- entityCanopies(e)) {
-      canopyEntities(canopy).remove(e)
+    if (entityCanopies.contains(e)) {
+      for (canopy <- entityCanopies(e)) {
+        canopyEntities(canopy).remove(e)
+      }
+      // now remove from forward map
+      entityCanopies.remove(e)
+    } else {
+      // remove from all canopyEntities
+      for(ce <- canopyEntities.values) ce.remove(e)
     }
-    // now remove from forward map
-    entityCanopies.remove(e)
   }
 
   def updateCanopies(e: Id, canopyStrings: Iterable[String]) {
-    val set = entityCanopies.getOrElseUpdate(e, new HashSet[String])
+    val set = entityCanopies.getOrElseUpdate(e, new mutable.LinkedHashSet[String])
     for (canopy <- canopyStrings) {
       set += canopy
-      canopyEntities.getOrElseUpdate(canopy, new HashSet[Id]) += e
+      canopyEntities.getOrElseUpdate(canopy, new mutable.LinkedHashSet[Id]) += e
     }
   }
 }
