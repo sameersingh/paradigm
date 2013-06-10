@@ -104,7 +104,10 @@ abstract class Master[W <: Work, R <: Result] extends Actor with ActorLogging {
       context.watch(worker)
       worker ! WorkerMessages.WorkOnThis(w)
       true
-    } else false
+    } else {
+      log.debug("No more jobs.. alive = %d".format(workersActive))
+      false
+    }
   }
 
   def customHandler(c: CustomMasterMessage, sender: ActorRef): Unit = {}
