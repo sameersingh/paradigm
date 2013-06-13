@@ -23,6 +23,8 @@ abstract class Store {
 
   def randomUnlockedEntities(canopy: String, max: Int): Iterable[Id]
 
+  def numUnlockedEntities: Int
+
   def lock(e: Id): Unit
 
   def unlock(e: Id): Unit
@@ -74,6 +76,8 @@ class InMemStore extends Store {
       entities.shuffle.take(max)
     }
   }
+
+  def numUnlockedEntities: Int = unlocked.size
 
   def lock(e: Id) = unlocked -= e
 
@@ -136,6 +140,8 @@ class RedisStore(val host: String, val port: Int) extends Store {
   def randomCanopy(e: Id) = client.srandmember(canopiesKey(e)).get
 
   def randomUnlockedEntities(canopy: String, max: Int) = client.srandmember(canopyMembersKey(canopy), max).get.map(_.get)
+
+  def numUnlockedEntities: Int = throw new Error("not supported")
 
   def lock(e: Id) {
     client.srem(unlockedKey, e)
