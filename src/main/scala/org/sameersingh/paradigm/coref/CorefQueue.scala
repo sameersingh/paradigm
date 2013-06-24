@@ -25,7 +25,7 @@ class BasicQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
                                      val maxEntitiesPerJob: Int,
                                      val maxMentionsPerJob: Int,
                                      val numJobs: Int) extends CorefQueue[R] {
-
+  implicit val random = cc.factorie.random
   def minEntitiesPerJob = 2
   def minMentionsPerJob = 2
 
@@ -54,7 +54,7 @@ class BasicQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
     var entitiesPicked = 0
     val es = new ArrayBuffer[Entity[R]]
     while ((entitiesPicked < minEntitiesPerJob || mentionsPicked < minMentionsPerJob) && locked.size < entities.size) {
-      val tes = pickIds.shuffle()
+      val tes = pickIds.shuffle
             .filterNot(id => locked.contains(id)).map(entities(_)).filterNot(_.size == 0)
             .takeWhile(e => {
         val needToAdd = (mentionsPicked < minMentionsPerJob || entitiesPicked < minEntitiesPerJob) ||

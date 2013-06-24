@@ -15,6 +15,8 @@ import scala.collection.mutable
 abstract class Store {
   final type Id = String
 
+  implicit val random = cc.factorie.random
+
   def randomUnlocked(): Id
 
   def randomCanopy(): String

@@ -41,6 +41,8 @@ object TestSyntheticClassification {
     println(tokens.map(t => (t, t.label)).mkString(", "))
     val labels = tokens.map(_.label)
 
+    implicit val random = cc.factorie.random
+
     val system = ActorSystem("Local")
     val localModel = new TemplateModel with Parameters {
       this += new Emission(this)
@@ -62,7 +64,7 @@ object TestSyntheticClassification {
       val keyNames = samplerModelKeyNames
     }
 
-    labels.foreach(_.setRandomly())
+    labels.foreach(_.setRandomly(random, null))
     sampler.processAll(labels, 10)
     //sampler.updateWeights
     trainingActor ! SampleRankMessages.Stop()
@@ -71,7 +73,7 @@ object TestSyntheticClassification {
     }
 
     // without copying weights
-    labels.foreach(_.setRandomly())
+    labels.foreach(_.setRandomly(random, null))
     sampler.temperature = 0.001
     println(sampler.modelWithWeights.parameters.keys.map(_.value.mkString(", ")))
     for (iter <- 0 until 1) {
@@ -90,7 +92,7 @@ object TestSyntheticClassification {
 
     // with copying weights
     println(sampler.modelWithWeights.parameters.keys.map(_.value.mkString(", ")))
-    labels.foreach(_.setRandomly())
+    labels.foreach(_.setRandomly(random, null))
     sampler.temperature = 0.001
     for (iter <- 0 until 1) {
       sampler.processAll(labels)
