@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.sameersingh.paradigm</groupId>
   <artifactId>paradigm</artifactId>
-  <version>0.1-SNAPSHOT</version>
+  <version>0.1.1</version>
   <inceptionYear>2012</inceptionYear>
   <description>Library for distributed and parallel inference and learning of graphical models</description>
   <licenses>
@@ -20,8 +20,8 @@
     <maven.compiler.target>1.5</maven.compiler.target>
     <encoding>UTF-8</encoding>
     <scala.version>2.10.1</scala.version>
-    <utils.version>0.1.1-SNAPSHOT</utils.version>
-    <factorie.version>1.0-SNAPSHOT</factorie.version>
+    <utils.version>0.1.1</utils.version>
+    <factorie.version>1.0.0-M5</factorie.version>
   </properties>
 
   <repositories>
