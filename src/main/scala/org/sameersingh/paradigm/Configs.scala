@@ -1,7 +1,7 @@
 package org.sameersingh.paradigm
 
-import com.codahale.jerkson.Json
 import java.io.File
+import org.sameersingh.utils.misc.Json
 
 /**
  * @author sameer
