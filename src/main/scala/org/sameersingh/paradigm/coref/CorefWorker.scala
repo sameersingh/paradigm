@@ -18,6 +18,7 @@ case class SerEntity[R <: MentionRecord](id: Long, mentions: Seq[SerMention[R]])
 case class EntitySet[R <: MentionRecord](val fixed: Seq[SerEntity[R]]) extends Work with Result {
   def numEntities = fixed.size
   def numMentions = fixed.sumInts(_.mentions.length)
+  override def toString(): String = "Entities(%s)" format(fixed.take(10).map(e => "E(%d,%d)" format(e.id, e.mentions.size)).mkString(", "))
 }
 
 object EntitySet {
