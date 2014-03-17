@@ -66,7 +66,7 @@ class BasicQueue[R <: MentionRecord](initEntities: Seq[Entity[R]],
       tes.foreach(locked += _.id)
       es ++= tes
     }
-    println("Job: mentions: %d, entities: %d" format(es.sumInts(_.size), es.size))
+    //println("Job: mentions: %d, entities: %d" format(es.sumInts(_.size), es.size))
     //println("___ AFTER SENDING ___")
     //printMap()
     Some(EntitySet.fromEntities[R](es))
